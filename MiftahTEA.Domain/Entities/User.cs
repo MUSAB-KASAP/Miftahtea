@@ -34,6 +34,9 @@ namespace MiftahTEA.Domain.Entities
 
         public string? Bio { get; set; }
 
+        public string? PhotoUrl { get; set; }
+
+
         public ICollection<TranslatorLanguagePair> TranslatorLanguagePairs { get; set; }
      = new List<TranslatorLanguagePair>();
 

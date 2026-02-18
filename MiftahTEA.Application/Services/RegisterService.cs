@@ -7,6 +7,7 @@ using MiftahTEA.Application.Interfaces;
 using MiftahTEA.Domain.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+
 using System.Text;
 
 namespace MiftahTEA.Application.Services
@@ -168,14 +169,20 @@ namespace MiftahTEA.Application.Services
         }
 
         // fotoğraf ekle 
-        public async<Task<ApiResponse<string>>> AddPhotoAsync(AddPhotoRequest request)
+        public async Task<ApiResponse<string>> AddPhotoAsync(AddPhotoRequest request)
         {
             var user = await _context.Users
                 .FirstOrDefaultAsync(x => x.Id == request.UserId);
+
             if (user == null)
                 return ApiResponse<string>.Fail("Kullanıcı bulunamadı.");
-            user.Bio = request.PhotoUrl;
+
+            user.PhotoUrl = request.PhotoUrl;   // Bio değil PhotoUrl kullanmalısın
+
             await _context.SaveChangesAsync();
+
             return ApiResponse<string>.SuccessResponse("Fotoğraf başarıyla eklendi.");
         }
+
+    }
 }

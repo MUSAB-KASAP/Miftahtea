@@ -13,8 +13,21 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.File("logs/log.txt", rollingInterval: RollingInterval.Day) // dosyaya yazar
     .CreateLogger();
 
-
+// WebApplicationBuilder, ASP.NET Core 6 ile gelen yeni bir yapı
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("MiftahFrontendPolicy",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173")
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        });
+});
+
 
 // Serilog'u aktif ediyoruz
 builder.Host.UseSerilog();
@@ -158,6 +171,10 @@ if (app.Environment.IsDevelopment())
 
 // HTTPS yönlendirme
 app.UseHttpsRedirection();
+
+// CORS politikası ekleme
+app.UseCors("MiftahFrontendPolicy");
+
 
 // AUTH MIDDLEWARE SIRASI
 // Önce Authentication (kimlik doğrulama)

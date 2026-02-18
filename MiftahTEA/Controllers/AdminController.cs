@@ -15,6 +15,7 @@ namespace MiftahTEA.Controllers
     //projeyi bozdum
     // o güvenliğin amk
     // ben kemal geliyorum
+    // oldu
     public class AdminController : ControllerBase
     {
         private readonly IApplicationDbContext _context;

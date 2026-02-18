@@ -13,6 +13,7 @@ namespace MiftahTEA.Controllers
     [Route("api/[controller]")]
     [ApiController]
     //projeyi bozdum
+    // o güvenliğin amk
     public class AdminController : ControllerBase
     {
         private readonly IApplicationDbContext _context;

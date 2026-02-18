@@ -1,0 +1,6 @@
+@MiftahTEA_HostAddress = http://localhost:5124
+
+GET {{MiftahTEA_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

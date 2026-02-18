@@ -9,6 +9,7 @@ using System.Security.Claims;
 
 namespace MiftahTEA.Controllers
 {
+    // api projesi
     [Route("api/[controller]")]
     [ApiController]
     public class AdminController : ControllerBase

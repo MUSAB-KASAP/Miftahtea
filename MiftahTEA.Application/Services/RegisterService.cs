@@ -167,6 +167,15 @@ namespace MiftahTEA.Application.Services
                 request.IsActive ? "Kullanıcı aktif edildi." : "Kullanıcı banlandı.");
         }
 
-
-    }
+        // fotoğraf ekle 
+        public async<Task<ApiResponse<string>>> AddPhotoAsync(AddPhotoRequest request)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(x => x.Id == request.UserId);
+            if (user == null)
+                return ApiResponse<string>.Fail("Kullanıcı bulunamadı.");
+            user.Bio = request.PhotoUrl;
+            await _context.SaveChangesAsync();
+            return ApiResponse<string>.SuccessResponse("Fotoğraf başarıyla eklendi.");
+        }
 }

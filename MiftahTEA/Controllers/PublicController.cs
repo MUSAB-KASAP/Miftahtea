@@ -54,14 +54,14 @@ namespace MiftahTEA.Controllers
             var totalCount = await query.CountAsync();
 
             var translators = await query
-                .Include(u => u.TranslatorLanguagePairs)
+                    .Include(u => u.TranslatorLanguagePairs)
                     .ThenInclude(lp => lp.SourceLanguage)
-                .Include(u => u.TranslatorLanguagePairs)
+                    .Include(u => u.TranslatorLanguagePairs)
                     .ThenInclude(lp => lp.TargetLanguage)
-                .OrderBy(u => u.FullName)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(u => new
+                    .OrderBy(u => u.FullName)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(u => new
                 {
                     u.Id,
                     u.FullName,

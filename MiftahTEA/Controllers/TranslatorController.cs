@@ -117,20 +117,22 @@ namespace MiftahTEA.Controllers
 
             var exists = await _context.TranslatorLanguagePairs.AnyAsync(p =>
                 p.TranslatorId == guid &&
-                p.SourceLanguageId == request.FromLanguageId &&
-                p.TargetLanguageId == request.ToLanguageId);
+                p.SourceLanguageId == request.SourceLanguageId &&
+                p.TargetLanguageId == request.TargetLanguageId);
+
 
             if (exists)
                 return BadRequest(ApiResponse<string>.Fail("Bu dil çifti zaten mevcut."));
 
-            if (request.FromLanguageId == request.ToLanguageId)
+            if (request.SourceLanguageId == request.TargetLanguageId)
                 return BadRequest(ApiResponse<string>.Fail("Kaynak ve hedef dil aynı olamaz."));
 
             var pair = new TranslatorLanguagePair
             {
                 TranslatorId = guid,
-                SourceLanguageId = request.FromLanguageId,
-                TargetLanguageId = request.ToLanguageId,
+                SourceLanguageId = request.SourceLanguageId,
+                TargetLanguageId = request.TargetLanguageId,
+
                 BasePrice = request.BasePrice,
                 PriceDescription = request.PriceDescription
             };

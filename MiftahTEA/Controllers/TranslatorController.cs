@@ -143,6 +143,51 @@ namespace MiftahTEA.Controllers
             return Ok(ApiResponse<string>.SuccessResponse("Dil çifti eklendi."));
         }
 
+        //  
+        [Authorize(Roles = "Translator")]
+        [HttpPut("profile")]
+        public async Task<IActionResult> UpdateProfile(UpdateTranslatorProfileRequest request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+                return Unauthorized();
+
+            var guid = Guid.Parse(userId);
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == guid);
+
+            if (user == null)
+                return NotFound(ApiResponse<string>.Fail("Kullanıcı bulunamadı."));
+
+            //  VALIDATION BURAYA
+
+            if (string.IsNullOrWhiteSpace(request.FullName))
+                return BadRequest(ApiResponse<string>.Fail("İsim boş olamaz."));
+
+            if (request.FullName.Length > 150)
+                return BadRequest(ApiResponse<string>.Fail("İsim çok uzun."));
+
+            if (request.Bio?.Length > 1000)
+                return BadRequest(ApiResponse<string>.Fail("Biyografi en fazla 1000 karakter olabilir."));
+
+            if (!string.IsNullOrEmpty(request.PhotoUrl))
+            {
+                if (!Uri.TryCreate(request.PhotoUrl, UriKind.Absolute, out _))
+                    return BadRequest(ApiResponse<string>.Fail("Geçersiz fotoğraf linki."));
+            }
+
+            //  GÜNCELLEME BURADA
+
+            user.FullName = request.FullName.Trim();
+            user.Bio = request.Bio?.Trim();
+            user.PhotoUrl = request.PhotoUrl?.Trim();
+
+            await _context.SaveChangesAsync();
+
+            return Ok(ApiResponse<string>.SuccessResponse("Profil güncellendi."));
+        }
 
     }
 }

@@ -1,23 +1,26 @@
 ﻿// User entity → sistemdeki kullanıcıyı temsil eder
 // Bu class veritabanındaki Users tablosuna karşılık gelir
-using MiftahTEA.Domain.Entities;
 using MiftahTEA.Domain.Common;
+using MiftahTEA.Domain.Entities;
+using MiftahTEA.Domain.Entities.MiftahTEA.Domain.Entities;
 
 namespace MiftahTEA.Domain.Entities
 {
     public class User : BaseEntity
     {
         //  Kullanıcının adı soyadı
-        public required string FullName { get; set; }
+        public  string FullName { get; set; }
 
         //  Email adresi (login için kullanılır)
-        public required string Email { get; set; }
+        public  string Email { get; set; }
 
         //  Şifrenin hashlenmiş hali (plain text ASLA tutulmaz)
-        public required string PasswordHash { get; set; }
+        public  string PasswordHash { get; set; }
 
         //  Kullanıcı rolü (Admin, Translator, Customer)
-        public required string Role { get; set; }
+        public Guid RoleId { get; set; }
+        public Role Role { get; set; }
+
 
         //  Kullanıcı aktif mi? (admin kapatabilir)
         public bool IsActive { get; set; } = true;

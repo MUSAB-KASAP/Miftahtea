@@ -36,14 +36,23 @@ namespace MiftahTEA.Application.Services
             if (existingUser != null)
                 return ApiResponse<string>.Fail("Bu email zaten kayıtlı.");
 
+            // 🔥 Role tablosundan rolü bul
+            var role = await _context.Roles
+                .FirstOrDefaultAsync(r => r.Name == request.Role);
+
+            if (role == null)
+                return ApiResponse<string>.Fail("Geçersiz rol.");
+
             var user = new User
             {
                 FullName = request.FullName,
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Role = request.Role,
-                IsActive = true
+                RoleId = role.Id,
+                IsActive = true,
+                IsTranslatorApproved = role.Name == "Translator" ? false : true
             };
+
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -51,12 +60,14 @@ namespace MiftahTEA.Application.Services
             return ApiResponse<string>.SuccessResponse("Kayıt başarılı.");
         }
 
+
         // ================================
         // LOGIN
         // ================================
         public async Task<ApiResponse<object>> LoginAsync(LoginRequest request)
         {
             var user = await _context.Users
+                .Include(u=> u.Role)
                 .FirstOrDefaultAsync(x => x.Email == request.Email);
 
             if (user == null)
@@ -134,7 +145,8 @@ namespace MiftahTEA.Application.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Role, user.Role.Name)
+
             };
 
             var token = new JwtSecurityToken(

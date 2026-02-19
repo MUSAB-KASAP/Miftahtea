@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MiftahTEA.Application.Interfaces;
 using MiftahTEA.Domain.Entities;
+using MiftahTEA.Domain.Entities.MiftahTEA.Domain.Entities;
 
 namespace MiftahTEA.Infrastructure.Persistence
 {
@@ -12,26 +13,35 @@ namespace MiftahTEA.Infrastructure.Persistence
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Role> Roles { get; set; }
         public DbSet<Language> Languages { get; set; }
         public DbSet<City> Cities { get; set; }
         public DbSet<TranslatorLanguagePair> TranslatorLanguagePairs { get; set; }
         public DbSet<ContactMessage> ContactMessages { get; set; }
 
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // ===============================
+            // RELATIONS
+            // ===============================
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Role)
+                .WithMany(r => r.Users)
+                .HasForeignKey(u => u.RoleId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<TranslatorLanguagePair>()
                 .Property(p => p.BasePrice)
                 .HasPrecision(18, 2);
 
-            // 🔥 Cascade fix
             modelBuilder.Entity<TranslatorLanguagePair>()
-                 .HasOne(t => t.SourceLanguage)
-                 .WithMany()
-                 .HasForeignKey(t => t.SourceLanguageId)
-                 .OnDelete(DeleteBehavior.NoAction);
+                .HasOne(t => t.SourceLanguage)
+                .WithMany()
+                .HasForeignKey(t => t.SourceLanguageId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<TranslatorLanguagePair>()
                 .HasOne(t => t.TargetLanguage)
@@ -51,6 +61,9 @@ namespace MiftahTEA.Infrastructure.Persistence
                 .HasForeignKey(c => c.TranslatorId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // ===============================
+            // LANGUAGE SEED
+            // ===============================
 
             modelBuilder.Entity<Language>().HasData(
                 new Language
@@ -73,6 +86,28 @@ namespace MiftahTEA.Infrastructure.Persistence
                     Name = "English",
                     Code = "EN",
                     CreatedDate = new DateTime(2025, 1, 1)
+                }
+            );
+
+            // ===============================
+            // ROLE SEED
+            // ===============================
+
+            modelBuilder.Entity<Role>().HasData(
+                new Role
+                {
+                    Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                    Name = "Admin"
+                },
+                new Role
+                {
+                    Id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                    Name = "Translator"
+                },
+                new Role
+                {
+                    Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+                    Name = "Customer"
                 }
             );
         }

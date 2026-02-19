@@ -6,6 +6,7 @@ using MiftahTEA.Application.DTOs.MiftahTEA.Application.DTOs;
 using MiftahTEA.Application.Interfaces;
 using MiftahTEA.Application.Services;
 using System.Security.Claims;
+using MiftahTEA.Domain.Entities;
 
 namespace MiftahTEA.Controllers
 {
@@ -39,11 +40,11 @@ namespace MiftahTEA.Controllers
             var totalUsers = await _context.Users.CountAsync();
 
             var totalTranslators = await _context.Users
-                .Where(u => u.Role == "Translator")
+                .Where(u => u.Role.Name == "Translator")
                 .CountAsync();
 
             var pendingTranslators = await _context.Users
-                .Where(u => u.Role == "Translator" && !u.IsTranslatorApproved)
+                .Where(u => u.Role.Name == "Translator" && !u.IsTranslatorApproved)
                 .CountAsync();
 
             var activeUsers = await _context.Users
@@ -55,7 +56,7 @@ namespace MiftahTEA.Controllers
                 .CountAsync();
 
             var pendingList = await _context.Users
-                .Where(u => u.Role == "Translator" && !u.IsTranslatorApproved)
+                .Where(u => u.Role.Name == "Translator" && !u.IsTranslatorApproved)
                 .OrderByDescending(u => u.CreatedDate)
                 .Select(u => new PendingTranslatorDto
                 {
@@ -87,7 +88,10 @@ namespace MiftahTEA.Controllers
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers()
         {
-            var users = await _context.Users.ToListAsync();
+            var users = await _context.Users
+            .Include(u => u.Role)
+            .ToListAsync();
+
 
             return Ok(ApiResponse<object>.SuccessResponse(users));
         }
@@ -118,7 +122,16 @@ namespace MiftahTEA.Controllers
             if (user == null)
                 return NotFound(ApiResponse<object>.Fail("Kullanıcı bulunamadı."));
 
-            user.Role = request.NewRole;
+            var role = await _context.Roles
+              .FirstOrDefaultAsync(r => r.Name == request.NewRole);
+
+            if (role == null)
+                return BadRequest(ApiResponse<object>.Fail("Geçersiz rol."));
+
+
+            user.RoleId = role.Id;
+
+
 
             await _context.SaveChangesAsync();
 
@@ -227,7 +240,43 @@ namespace MiftahTEA.Controllers
 
             return Ok(ApiResponse<string>.SuccessResponse("Profil güncellendi"));
         }
+        // 🔒 Admin çevirmen onaylama
+        [Authorize(Roles = "Admin")]
+        [HttpPut("approve-translator/{id}")]
+        public async Task<IActionResult> ApproveTranslator(Guid id)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == id && u.Role.Name  == "Translator");
 
+            if (user == null)
+                return NotFound(ApiResponse<string>.Fail("Çevirmen bulunamadı."));
+
+            if (user.IsTranslatorApproved)
+                return BadRequest(ApiResponse<string>.Fail("Çevirmen zaten onaylı."));
+
+            user.IsTranslatorApproved = true;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(ApiResponse<string>.SuccessResponse("Çevirmen onaylandı."));
+        }
+        // 🔒 Admin çevirmen onaylama
+        [Authorize(Roles = "Admin")]
+        [HttpPut("reject-translator/{id}")]
+        public async Task<IActionResult> RejectTranslator(Guid id)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == id && u.Role.Name == "Translator");
+
+            if (user == null)
+                return NotFound(ApiResponse<string>.Fail("Çevirmen bulunamadı."));
+
+            user.IsTranslatorApproved = false;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(ApiResponse<string>.SuccessResponse("Çevirmen reddedildi."));
+        }
 
     }
 }

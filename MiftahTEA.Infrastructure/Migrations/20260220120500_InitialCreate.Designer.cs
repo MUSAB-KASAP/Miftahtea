@@ -12,8 +12,8 @@ using MiftahTEA.Infrastructure.Persistence;
 namespace MiftahTEA.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260218123745_AddUserPhoto")]
-    partial class AddUserPhoto
+    [Migration("20260220120500_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -131,6 +131,38 @@ namespace MiftahTEA.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("MiftahTEA.Domain.Entities.MiftahTEA.Domain.Entities.Role", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            Name = "Admin"
+                        },
+                        new
+                        {
+                            Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            Name = "Translator"
+                        },
+                        new
+                        {
+                            Id = new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+                            Name = "Customer"
+                        });
+                });
+
             modelBuilder.Entity("MiftahTEA.Domain.Entities.TranslatorLanguagePair", b =>
                 {
                     b.Property<Guid>("Id")
@@ -213,14 +245,15 @@ namespace MiftahTEA.Infrastructure.Migrations
                     b.Property<string>("RefreshTokenHash")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
 
                     b.ToTable("Users");
                 });
@@ -261,6 +294,22 @@ namespace MiftahTEA.Infrastructure.Migrations
                     b.Navigation("TargetLanguage");
 
                     b.Navigation("Translator");
+                });
+
+            modelBuilder.Entity("MiftahTEA.Domain.Entities.User", b =>
+                {
+                    b.HasOne("MiftahTEA.Domain.Entities.MiftahTEA.Domain.Entities.Role", "Role")
+                        .WithMany("Users")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("MiftahTEA.Domain.Entities.MiftahTEA.Domain.Entities.Role", b =>
+                {
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("MiftahTEA.Domain.Entities.User", b =>

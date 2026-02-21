@@ -7,7 +7,6 @@ using MiftahTEA.Application.Interfaces;
 using MiftahTEA.Application.Services;
 using MiftahTEA.Domain.Entities;
 
-
 namespace MiftahTEA.Controllers
 {
     [Route("api/[controller]")]
@@ -23,21 +22,25 @@ namespace MiftahTEA.Controllers
             _emailService = emailService;
         }
 
-        //  Translator listeleme
+        // =========================
+        // TRANSLATOR LIST (PUBLIC)
+        // =========================
         [HttpGet("translators")]
         public async Task<IActionResult> GetTranslators(
-        string? search,
-        string? sourceLang,
-        string? targetLang,
-        int page = 1,
-        int pageSize = 10)
+            string? search,
+            string? sourceLang,
+            string? targetLang,
+            int page = 1,
+            int pageSize = 10)
         {
+            var query = _context.Users
+                .Include(u => u.Role)
+                .Where(u =>
+                    u.Role.Name == "Translator" &&
+                    u.IsTranslatorApproved &&
+                    u.IsActive);
 
-            var query = _context.Users.Include(u => u.Role)
-               .Where(u => u.Role.Name == "Translator"
-               && u.IsTranslatorApproved
-               && u.IsActive);
-
+            // Dil filtre
             if (!string.IsNullOrEmpty(sourceLang) && !string.IsNullOrEmpty(targetLang))
             {
                 query = query.Where(u =>
@@ -46,6 +49,7 @@ namespace MiftahTEA.Controllers
                         lp.TargetLanguage.Code == targetLang));
             }
 
+            // Arama
             if (!string.IsNullOrEmpty(search))
             {
                 query = query.Where(u => u.FullName.Contains(search));
@@ -54,19 +58,29 @@ namespace MiftahTEA.Controllers
             var totalCount = await query.CountAsync();
 
             var translators = await query
-                    .Include(u => u.TranslatorLanguagePairs)
-                    .ThenInclude(lp => lp.SourceLanguage)
-                    .Include(u => u.TranslatorLanguagePairs)
-                    .ThenInclude(lp => lp.TargetLanguage)
-                    .OrderBy(u => u.FullName)
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .Select(u => new
+                .Include(u => u.TranslatorLanguagePairs)
+                .ThenInclude(lp => lp.SourceLanguage)
+                .Include(u => u.TranslatorLanguagePairs)
+                .ThenInclude(lp => lp.TargetLanguage)
+                .OrderBy(u => u.FullName)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(u => new
                 {
                     u.Id,
                     u.FullName,
                     u.Bio,
                     u.PhotoUrl,
+
+                    Profile = _context.TranslatorProfiles
+                        .Where(p => p.TranslatorId == u.Id && p.IsActive)
+                        .Select(p => new
+                        {
+                            p.Title,
+                            p.Description
+                        })
+                        .FirstOrDefault(),
+
                     Languages = u.TranslatorLanguagePairs.Select(lp => new
                     {
                         SourceLanguage = lp.SourceLanguage.Code,
@@ -84,104 +98,102 @@ namespace MiftahTEA.Controllers
             }));
         }
 
-
-
-        //  Mesaj gönder + email
+        // =========================
+        // CONTACT MESSAGE
+        // =========================
         [HttpPost("contact")]
-            public async Task<IActionResult> SendContactMessage(SendContactMessageRequest request)
+        public async Task<IActionResult> SendContactMessage(SendContactMessageRequest request)
+        {
+            var translator = await _context.Users
+                .Include(u => u.Role)
+                .Where(u =>
+                    u.Id == request.TranslatorId &&
+                    u.Role.Name == "Translator" &&
+                    u.IsTranslatorApproved &&
+                    u.IsActive)
+                .FirstOrDefaultAsync();
+
+            if (translator == null)
+                return BadRequest(ApiResponse<string>.Fail("Translator bulunamadı"));
+
+            var message = new ContactMessage
             {
-                var translator = await _context.Users
-                    .Where(u => u.Id == request.TranslatorId
-                             && u.Role.Name == "Translator"
-                             && u.IsTranslatorApproved
-                             && u.IsActive)
-                    .FirstOrDefaultAsync();
+                TranslatorId = request.TranslatorId,
+                SenderName = request.SenderName,
+                SenderEmail = request.SenderEmail,
+                Message = request.Message
+            };
 
-                if (translator == null)
-                    return BadRequest(ApiResponse<string>.Fail("Translator bulunamadı"));
+            _context.ContactMessages.Add(message);
+            await _context.SaveChangesAsync();
 
-                var message = new ContactMessage
-                {
-                    TranslatorId = request.TranslatorId,
-                    SenderName = request.SenderName,
-                    SenderEmail = request.SenderEmail,
-                    Message = request.Message
-                };
-
-                _context.ContactMessages.Add(message);
-                await _context.SaveChangesAsync();
-
-                //  EMAIL GÖNDER
-                try
-                {
-                    await _emailService.SendEmailAsync(
-                        translator.Email,
-                        "Yeni mesaj aldınız",
-                        $"Size yeni bir mesaj geldi:<br/><b>{message.Message}</b>"
-                    );
-                }
-                catch
-                {
-                    // hata olursa sistem durmaz
-                }
-
-                return Ok(ApiResponse<string>.SuccessResponse("Mesaj gönderildi"));
+            // Email gönder
+            try
+            {
+                await _emailService.SendEmailAsync(
+                    translator.Email,
+                    "Yeni mesaj aldınız",
+                    $"Size yeni bir mesaj geldi:<br/><b>{message.Message}</b>"
+                );
+            }
+            catch
+            {
+                // Email hatası sistemi durdurmaz
             }
 
-
-
-
-            // Güncelleme işlemi sadece çevirmenler tarafından yapılabilir
-            [Authorize(Roles = "Translator")]
-            [HttpPut("languages")]
-            public async Task<IActionResult> UpdateLanguagePair(UpdateLanguagePairRequest request)
-            {
-                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-                if (userId == null)
-                    return Unauthorized();
-
-                var guid = Guid.Parse(userId);
-
-                var pair = await _context.TranslatorLanguagePairs
-                    .FirstOrDefaultAsync(p => p.Id == request.PairId && p.TranslatorId == guid);
-
-                if (pair == null)
-                    return NotFound(ApiResponse<string>.Fail("Dil çifti bulunamadı."));
-
-                pair.BasePrice = request.BasePrice;
-                pair.PriceDescription = request.PriceDescription;
-
-                await _context.SaveChangesAsync();
-
-                return Ok(ApiResponse<string>.SuccessResponse("Dil çifti güncellendi."));
-            }
-
-            // Silme işlemi sadece çevirmenler tarafından yapılabilir
-            [Authorize(Roles = "Translator")]
-            [HttpDelete("languages/{id}")]
-            public async Task<IActionResult> DeleteLanguagePair(Guid id)
-            {
-                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-                if (userId == null)
-                    return Unauthorized();
-
-                var guid = Guid.Parse(userId);
-
-                var pair = await _context.TranslatorLanguagePairs
-                    .FirstOrDefaultAsync(p => p.Id == id && p.TranslatorId == guid);
-
-                if (pair == null)
-                    return NotFound(ApiResponse<string>.Fail("Dil çifti bulunamadı."));
-
-                _context.TranslatorLanguagePairs.Remove(pair);
-                await _context.SaveChangesAsync();
-
-                return Ok(ApiResponse<string>.SuccessResponse("Dil çifti silindi."));
-            }
-
-
+            return Ok(ApiResponse<string>.SuccessResponse("Mesaj gönderildi"));
         }
-    }
 
+        // =========================
+        // UPDATE LANGUAGE (TRANSLATOR)
+        // =========================
+        [Authorize(Roles = "Translator")]
+        [HttpPut("languages")]
+        public async Task<IActionResult> UpdateLanguagePair(UpdateLanguagePairRequest request)
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            var guid = Guid.Parse(userId);
+
+            var pair = await _context.TranslatorLanguagePairs
+                .FirstOrDefaultAsync(p => p.Id == request.PairId && p.TranslatorId == guid);
+
+            if (pair == null)
+                return NotFound(ApiResponse<string>.Fail("Dil çifti bulunamadı."));
+
+            pair.BasePrice = request.BasePrice;
+            pair.PriceDescription = request.PriceDescription;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(ApiResponse<string>.SuccessResponse("Dil çifti güncellendi."));
+        }
+
+        // =========================
+        // DELETE LANGUAGE (TRANSLATOR)
+        // =========================
+        [Authorize(Roles = "Translator")]
+        [HttpDelete("languages/{id}")]
+        public async Task<IActionResult> DeleteLanguagePair(Guid id)
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            var guid = Guid.Parse(userId);
+
+            var pair = await _context.TranslatorLanguagePairs
+                .FirstOrDefaultAsync(p => p.Id == id && p.TranslatorId == guid);
+
+            if (pair == null)
+                return NotFound(ApiResponse<string>.Fail("Dil çifti bulunamadı."));
+
+            _context.TranslatorLanguagePairs.Remove(pair);
+            await _context.SaveChangesAsync();
+
+            return Ok(ApiResponse<string>.SuccessResponse("Dil çifti silindi."));
+        }
+
+
+    }
+}

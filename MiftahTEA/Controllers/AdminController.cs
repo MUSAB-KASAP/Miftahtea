@@ -13,11 +13,7 @@ namespace MiftahTEA.Controllers
     // api projesi
     [Route("api/[controller]")]
     [ApiController]
-    //projeyi bozdum
-    // o güvenliğin amk
-    // ben kemal geliyorum
-    // oldu
-    //ben ne din dedim de dil dedim
+   
     public class AdminController : ControllerBase
     {
         private readonly IApplicationDbContext _context;
@@ -183,8 +179,6 @@ namespace MiftahTEA.Controllers
             return Ok(ApiResponse<string>.SuccessResponse("Kullanıcı silindi"));
         }
 
-
-
         // 🔒 ADMIN → kullanıcı ban / unban
         [Authorize(Roles = "Admin")]
         [HttpPut("toggle-user-status")]
@@ -278,5 +272,28 @@ namespace MiftahTEA.Controllers
             return Ok(ApiResponse<string>.SuccessResponse("Çevirmen reddedildi."));
         }
 
+        [Authorize(Roles = "Translator")]
+        [HttpGet("profile")]
+        public async Task<IActionResult> GetMyProfile()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            var guid = Guid.Parse(userId);
+
+            var profile = await _context.TranslatorProfiles
+                .Where(p => p.TranslatorId == guid)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Title,
+                    p.Description,
+                    p.IsActive,
+                    p.CreatedAt
+                })
+                .FirstOrDefaultAsync();
+
+            return Ok(profile);
+        }
     }
 }

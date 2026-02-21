@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MiftahTEA.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using MiftahTEA.Infrastructure.Persistence;
 namespace MiftahTEA.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260221193440_AddProfileView")]
+    partial class AddProfileView
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -188,40 +191,6 @@ namespace MiftahTEA.Infrastructure.Migrations
                         });
                 });
 
-            modelBuilder.Entity("MiftahTEA.Domain.Entities.Notification", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Notifications");
-                });
-
             modelBuilder.Entity("MiftahTEA.Domain.Entities.TranslatorLanguagePair", b =>
                 {
                     b.Property<Guid>("Id")
@@ -262,42 +231,6 @@ namespace MiftahTEA.Infrastructure.Migrations
                     b.ToTable("TranslatorLanguagePairs");
                 });
 
-            modelBuilder.Entity("MiftahTEA.Domain.Entities.TranslatorProfile", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("TranslatorId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TranslatorId");
-
-                    b.ToTable("TranslatorProfiles");
-                });
-
             modelBuilder.Entity("MiftahTEA.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -305,9 +238,6 @@ namespace MiftahTEA.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Bio")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("City")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedDate")
@@ -401,17 +331,6 @@ namespace MiftahTEA.Infrastructure.Migrations
                     b.Navigation("SourceLanguage");
 
                     b.Navigation("TargetLanguage");
-
-                    b.Navigation("Translator");
-                });
-
-            modelBuilder.Entity("MiftahTEA.Domain.Entities.TranslatorProfile", b =>
-                {
-                    b.HasOne("MiftahTEA.Domain.Entities.User", "Translator")
-                        .WithMany()
-                        .HasForeignKey("TranslatorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("Translator");
                 });

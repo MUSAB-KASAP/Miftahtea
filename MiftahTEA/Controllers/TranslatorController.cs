@@ -189,5 +189,46 @@ namespace MiftahTEA.Controllers
             return Ok(ApiResponse<string>.SuccessResponse("Profil güncellendi."));
         }
 
+        [Authorize(Roles = "Translator")]
+        [HttpGet("notifications")]
+        public async Task<IActionResult> GetNotifications()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            var guid = Guid.Parse(userId);
+
+            var notifications = await _context.Notifications
+                .Where(n => n.UserId == guid)
+                .OrderByDescending(n => n.CreatedAt)
+                .Select(n => new
+                {
+                    n.Id,
+                    n.Title,
+                    n.Message,
+                    n.IsRead,
+                    n.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(notifications);
+        }
+        [Authorize(Roles = "Translator")]
+        [HttpPut("notifications/{id}/read")]
+        public async Task<IActionResult> MarkAsRead(Guid id)
+        {
+            var notification = await _context.Notifications
+                .FirstOrDefaultAsync(n => n.Id == id);
+
+            if (notification == null)
+                return NotFound();
+
+            notification.IsRead = true;
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
     }
 }

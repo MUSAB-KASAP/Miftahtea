@@ -11,13 +11,16 @@ namespace MiftahTEA.Infrastructure.Persistence
             : base(options)
         {
         }
-
+        public DbSet<Notification> Notifications { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Language> Languages { get; set; }
         public DbSet<City> Cities { get; set; }
         public DbSet<TranslatorLanguagePair> TranslatorLanguagePairs { get; set; }
         public DbSet<ContactMessage> ContactMessages { get; set; }
+        public DbSet<FavoriteTranslator> FavoriteTranslators { get; set; }
+        public DbSet<TranslatorProfile> TranslatorProfiles { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -110,6 +113,7 @@ namespace MiftahTEA.Infrastructure.Persistence
                     Name = "Customer"
                 }
             );
+
         }
     }
 }

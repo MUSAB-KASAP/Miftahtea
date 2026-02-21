@@ -50,9 +50,9 @@ namespace MiftahTEA.Application.Services
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 RoleId = role.Id,
                 IsActive = true,
+                IsApproved = true,
                 IsTranslatorApproved = role.Name == "Translator" ? false : true
             };
-
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();

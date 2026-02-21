@@ -21,7 +21,6 @@ namespace MiftahTEA.Domain.Entities
         public Guid RoleId { get; set; }
         public Role Role { get; set; }
 
-
         //  Kullanıcı aktif mi? (admin kapatabilir)
         public bool IsActive { get; set; } = true;
 
@@ -34,10 +33,10 @@ namespace MiftahTEA.Domain.Entities
         //  Refresh token süresi
         public DateTime? RefreshTokenExpiry { get; set; }
         public bool IsApproved { get; set; }
-
         public string? Bio { get; set; }
-
         public string? PhotoUrl { get; set; }
+
+        public string? City { get; set; }
 
 
         public ICollection<TranslatorLanguagePair> TranslatorLanguagePairs { get; set; }

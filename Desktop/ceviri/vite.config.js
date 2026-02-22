@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://localhost:7207",
+        target: "http://localhost:5124",
         changeOrigin: true,
         secure: false, // Localhost SSL sertifika hatalarını yok sayar
       },

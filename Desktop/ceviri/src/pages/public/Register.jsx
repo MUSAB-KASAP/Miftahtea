@@ -10,37 +10,6 @@ import {
 import { registerUser } from "../../services/api";
 import "../../css/login.css";
 
-const countryCodes = [
-  { code: "+90", short: "TR", name: "Türkiye" },
-  { code: "+994", short: "AZ", name: "Azerbaijan" },
-  { code: "+1", short: "US", name: "USA" },
-  { code: "+44", short: "GB", name: "United Kingdom" }, // FlagCDN uses GB for UK
-  { code: "+49", short: "DE", name: "Germany" },
-  { code: "+33", short: "FR", name: "France" },
-  { code: "+39", short: "IT", name: "Italy" },
-  { code: "+34", short: "ES", name: "Spain" },
-  { code: "+31", short: "NL", name: "Netherlands" },
-  { code: "+32", short: "BE", name: "Belgium" },
-  { code: "+7", short: "RU", name: "Russia" },
-  { code: "+86", short: "CN", name: "China" },
-  { code: "+81", short: "JP", name: "Japan" },
-  { code: "+82", short: "KR", name: "South Korea" },
-  { code: "+91", short: "IN", name: "India" },
-  { code: "+61", short: "AU", name: "Australia" },
-  { code: "+55", short: "BR", name: "Brazil" },
-  { code: "+52", short: "MX", name: "Mexico" },
-  { code: "+966", short: "SA", name: "Saudi Arabia" },
-  { code: "+971", short: "AE", name: "UAE" },
-  { code: "+20", short: "EG", name: "Egypt" },
-  { code: "+98", short: "IR", name: "Iran" },
-  { code: "+964", short: "IQ", name: "Iraq" },
-  { code: "+30", short: "GR", name: "Greece" },
-  { code: "+359", short: "BG", name: "Bulgaria" },
-  { code: "+380", short: "UA", name: "Ukraine" },
-  { code: "+77", short: "KZ", name: "Kazakhstan" },
-  { code: "+963", short: "SY", name: "Syria" },
-];
-
 const Register = () => {
   const navigate = useNavigate();
 
@@ -49,8 +18,6 @@ const Register = () => {
     fullName: "",
     email: "",
     password: "",
-    phoneNumber: "",
-    countryCode: "+90",
     role: "Customer",
   });
 
@@ -63,41 +30,8 @@ const Register = () => {
   const emailDomains = ["gmail.com", "outlook.com", "hotmail.com", "yahoo.com"];
   const [emailSuggestions, setEmailSuggestions] = useState([]);
 
-  // Custom Dropdown State
-  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // Telefon numarası formatlama fonksiyonu
-  const formatPhoneNumber = (value, countryCode) => {
-    // Sadece rakamları al
-    const cleaned = value.replace(/\D/g, "");
-
-    // Türkiye (+90) için özel format: 5XX XXX XX XX
-    if (countryCode === "+90") {
-      if (cleaned.length === 0) return "";
-      if (cleaned.length <= 3) return cleaned;
-      if (cleaned.length <= 6)
-        return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
-      if (cleaned.length <= 8)
-        return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
-      return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 8)} ${cleaned.slice(8, 10)}`;
-    }
-
-    // Diğer ülkeler için genel format (3'erli gruplama)
-    return cleaned.replace(/(\d{3})(?=\d)/g, "$1 ").trim();
-  };
-
   const handleInputChange = (event) => {
     const { id, value } = event.target;
-
-    // Telefon numarası formatlama
-    if (id === "phoneNumber") {
-      const formatted = formatPhoneNumber(value, data.countryCode);
-      if (formatted.replace(/\D/g, "").length > 15) return; // Max uzunluk kontrolü
-      setData({ ...data, [id]: formatted });
-      if (error) setError("");
-      return;
-    }
 
     // Email öneri mantığı
     if (id === "email") {
@@ -133,12 +67,8 @@ const Register = () => {
     setError("");
     setMessage("");
 
-    // Temizlenmiş telefon numarası (Boşluksuz)
-    const cleanPhoneNumber = data.phoneNumber.replace(/\D/g, "");
-
     // 1. Koşul: Boş alan kontrolü
-    // 1. Koşul: Boş alan kontrolü
-    if (!data.fullName || !data.email || !data.password || !cleanPhoneNumber) {
+    if (!data.fullName || !data.email || !data.password) {
       setError("Her alanı doldurmak zorunludur.");
       return;
     }
@@ -159,11 +89,8 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      // API'ye gönderilecek veriyi hazırla (Ülke kodu ile telefonu birleştir)
-      const payload = {
-        ...data,
-        phoneNumber: `${data.countryCode}${cleanPhoneNumber}`,
-      };
+      // API'ye gönderilecek veriyi hazırla
+      const payload = { ...data };
 
       const res = await registerUser(payload);
       if (res.data.success) {
@@ -175,8 +102,6 @@ const Register = () => {
           fullName: "",
           email: "",
           password: "",
-          phoneNumber: "",
-          countryCode: "+90",
           role: "Customer",
         });
       }
@@ -192,15 +117,23 @@ const Register = () => {
   };
 
   return (
-    <div className="login-page-wrapper">
-      <div className="auth-container">
-        <div className="heading">Kayıt Olun</div>
+    <div className="login-page-wrapper auth-bg-gradient">
+      <div
+        className="auth-container glass-panel"
+        style={{ border: "none", zIndex: 1 }}
+      >
+        <h2
+          className="heading"
+          style={{ textAlign: "center", marginBottom: "20px" }}
+        >
+          Kayıt Olun
+        </h2>
 
         <form className="form" onSubmit={handleFormSubmit}>
           {/* FullName Input */}
           <input
             required
-            className="input"
+            className="modern-input"
             type="text"
             placeholder="Ad Soyad"
             id="fullName"
@@ -213,7 +146,7 @@ const Register = () => {
           <div style={{ position: "relative", width: "100%" }}>
             <input
               required
-              className="input"
+              className="modern-input"
               type="text"
               placeholder="Email"
               id="email"
@@ -272,7 +205,7 @@ const Register = () => {
           <div className="password-wrapper">
             <input
               required
-              className="input"
+              className="modern-input"
               type={showPassword ? "text" : "password"}
               placeholder="Şifre"
               id="password"
@@ -288,202 +221,6 @@ const Register = () => {
           </div>
 
           {/* PhoneNumber Input with Country Code */}
-          <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-            {/* Custom Ülke Kodu Seçimi */}
-            <div
-              style={{ width: "120px", position: "relative" }}
-              id="custom-dropdown-container"
-            >
-              <div
-                className="input"
-                onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  userSelect: "none",
-                }}
-              >
-                {(() => {
-                  const selected =
-                    countryCodes.find((c) => c.code === data.countryCode) ||
-                    countryCodes[0];
-                  return (
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <img
-                        src={`https://flagcdn.com/w20/${selected.short.toLowerCase()}.png`}
-                        srcSet={`https://flagcdn.com/w40/${selected.short.toLowerCase()}.png 2x`}
-                        width="20"
-                        alt={selected.name}
-                        style={{ marginRight: "5px", borderRadius: "2px" }}
-                      />
-                      <span>
-                        {selected.short} {selected.code}
-                      </span>
-                    </div>
-                  );
-                })()}
-                <span style={{ fontSize: "10px", marginLeft: "5px" }}>▼</span>
-              </div>
-
-              {/* Dropdown Listesi */}
-              {showCountryDropdown && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "100%",
-                    left: "0",
-                    width: "300px",
-                    maxHeight: "300px",
-                    backgroundColor: "white",
-                    border: "1px solid #ddd",
-                    borderRadius: "8px",
-                    zIndex: 1000,
-                    boxShadow: "0 4px 15px rgba(0,0,0,0.15)",
-                    display: "flex",
-                    flexDirection: "column",
-                    overflow: "hidden",
-                  }}
-                >
-                  {/* Arama Kutusu */}
-                  <div
-                    style={{
-                      padding: "10px",
-                      borderBottom: "1px solid #eee",
-                      background: "#f8f9fa",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      placeholder="Ülke ara..."
-                      autoFocus
-                      onClick={(e) => e.stopPropagation()}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      value={searchTerm}
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        borderRadius: "6px",
-                        border: "1px solid #ddd",
-                        fontSize: "13px",
-                        outline: "none",
-                      }}
-                    />
-                  </div>
-
-                  {/* Liste */}
-                  <ul
-                    style={{
-                      overflowY: "auto",
-                      listStyle: "none",
-                      padding: "0",
-                      margin: "0",
-                      flex: 1,
-                    }}
-                  >
-                    {countryCodes
-                      .filter(
-                        (c) =>
-                          c.name
-                            .toLowerCase()
-                            .includes(searchTerm.toLowerCase()) ||
-                          c.code.includes(searchTerm) ||
-                          c.short
-                            .toLowerCase()
-                            .includes(searchTerm.toLowerCase()),
-                      )
-                      .map((item, index) => (
-                        <li
-                          key={index}
-                          onClick={() => {
-                            setData({ ...data, countryCode: item.code });
-                            setShowCountryDropdown(false);
-                            setSearchTerm(""); // Aramayı temizle
-                          }}
-                          className="country-option"
-                          style={{
-                            padding: "10px 15px",
-                            cursor: "pointer",
-                            borderBottom: "1px solid #f0f0f0",
-                            display: "flex",
-                            alignItems: "center",
-                            fontSize: "14px",
-                            transition: "background 0.2s",
-                            backgroundColor:
-                              data.countryCode === item.code
-                                ? "#eef2ff"
-                                : "white",
-                          }}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.backgroundColor = "#f0f2f5")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.backgroundColor =
-                              data.countryCode === item.code
-                                ? "#eef2ff"
-                                : "white")
-                          }
-                        >
-                          <img
-                            src={`https://flagcdn.com/w40/${item.short.toLowerCase()}.png`}
-                            srcSet={`https://flagcdn.com/w80/${item.short.toLowerCase()}.png 2x`}
-                            width="30"
-                            alt={item.name}
-                            style={{
-                              marginRight: "12px",
-                              borderRadius: "3px",
-                              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                            }}
-                          />
-                          <span
-                            style={{
-                              flex: 1,
-                              fontWeight: "500",
-                              color: "#333",
-                            }}
-                          >
-                            {item.name}
-                          </span>
-                          <span style={{ color: "#666", fontWeight: "bold" }}>
-                            ({item.code})
-                          </span>
-                        </li>
-                      ))}
-                    {countryCodes.filter((c) =>
-                      c.name.toLowerCase().includes(searchTerm.toLowerCase()),
-                    ).length === 0 && (
-                      <li
-                        style={{
-                          padding: "15px",
-                          textAlign: "center",
-                          color: "#888",
-                          fontSize: "13px",
-                        }}
-                      >
-                        Sonuç bulunamadı
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* Telefon Numarası */}
-            <input
-              required
-              className="input"
-              type="tel"
-              placeholder="Telefon Numarası"
-              id="phoneNumber"
-              value={data.phoneNumber || ""}
-              onChange={handleInputChange}
-              autoComplete="tel"
-              style={{ flex: 1, marginTop: "0" }}
-            />
-          </div>
 
           {/* Role Selection */}
           <div
@@ -534,10 +271,14 @@ const Register = () => {
 
           {/* Register Button */}
           <button
-            className="login-button"
+            className="btn-modern"
             type="submit"
             disabled={isLoading}
-            style={{ opacity: isLoading ? 0.7 : 1 }}
+            style={{
+              width: "100%",
+              marginTop: "15px",
+              opacity: isLoading ? 0.7 : 1,
+            }}
           >
             {isLoading ? "İşleniyor..." : "Kaydol"}
           </button>

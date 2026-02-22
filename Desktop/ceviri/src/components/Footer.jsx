@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   FaFacebookF,
   FaTwitter,
@@ -8,13 +8,22 @@ import {
 } from "react-icons/fa";
 
 const Footer = () => {
+  const location = useLocation();
+
+  const handleHomeClick = (e) => {
+    if (location.pathname === "/") {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   return (
     <footer className="main-footer">
       <div className="container">
         <div className="footer-content">
           {/* Brand Section */}
           <div className="footer-brand">
-            <Link to="/" className="footer-logo">
+            <Link to="/" className="footer-logo" onClick={handleHomeClick}>
               MiftahTEA
             </Link>
             <p className="footer-description">
@@ -28,7 +37,9 @@ const Footer = () => {
             <h4 className="footer-heading">Hızlı Erişim</h4>
             <ul>
               <li>
-                <Link to="/">Anasayfa</Link>
+                <Link to="/" onClick={handleHomeClick}>
+                  Anasayfa
+                </Link>
               </li>
               <li>
                 <Link to="/about">Hakkımızda</Link>

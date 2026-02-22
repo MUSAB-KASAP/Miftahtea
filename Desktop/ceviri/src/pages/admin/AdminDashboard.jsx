@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getAdminDashboard } from "../../services/api";
+import { Link } from "react-router-dom";
 
 // ==============================================================================
 // ADMIN DASHBOARD (YÖNETİCİ PANELİ)
@@ -37,13 +38,31 @@ const AdminDashboard = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>Yönetici Paneli (Admin)</h1>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <h1>Yönetici Paneli (Admin)</h1>
+        <Link
+          to="/"
+          className="btn-modern"
+          style={{
+            padding: "8px 16px",
+            fontSize: "0.9rem",
+          }}
+        >
+          Anasayfaya Dön
+        </Link>
+      </div>
       <p>Sistem genel durumunu buradan izleyebilirsiniz.</p>
 
       {/* İSTATİSTİK KARTLARI */}
       <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
         {/* Kart 1: Toplam Kullanıcı */}
-        <div style={cardStyle}>
+        <div className="modern-card-hover glass-panel" style={cardStyle}>
           <h3>Toplam Kullanıcı</h3>
           <p style={{ fontSize: "2rem", fontWeight: "bold" }}>
             {stats.totalUsers}
@@ -51,7 +70,10 @@ const AdminDashboard = () => {
         </div>
 
         {/* Kart 2: Toplam Çevirmen */}
-        <div style={{ ...cardStyle, borderLeft: "5px solid purple" }}>
+        <div
+          className="modern-card-hover glass-panel"
+          style={{ ...cardStyle, borderLeft: "5px solid purple" }}
+        >
           <h3>Toplam Çevirmen</h3>
           <p style={{ fontSize: "2rem", fontWeight: "bold", color: "purple" }}>
             {stats.totalTranslators}
@@ -59,7 +81,10 @@ const AdminDashboard = () => {
         </div>
 
         {/* Kart 3: Toplam Mesaj */}
-        <div style={{ ...cardStyle, borderLeft: "5px solid orange" }}>
+        <div
+          className="modern-card-hover glass-panel"
+          style={{ ...cardStyle, borderLeft: "5px solid orange" }}
+        >
           <h3>Toplam Mesaj</h3>
           <p style={{ fontSize: "2rem", fontWeight: "bold", color: "orange" }}>
             {stats.totalMessages}
@@ -72,12 +97,9 @@ const AdminDashboard = () => {
 
 // Basit kart stili
 const cardStyle = {
-  background: "white",
   padding: "20px",
-  borderRadius: "8px",
-  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
   flex: 1,
-  borderLeft: "5px solid #007BFF",
+  borderLeft: "5px solid var(--primary-color)",
 };
 
 export default AdminDashboard;

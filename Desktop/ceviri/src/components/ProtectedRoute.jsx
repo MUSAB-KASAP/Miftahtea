@@ -22,10 +22,15 @@ const ProtectedRoute = ({ allowedRoles }) => {
 
   // B) Eğer Token var ama Rolü yetersizse ->
   // Örneğin "Customer" rolüyle "Admin" sayfasına girmeye çalışıyorsa.
-  // Onu Ana Sayfaya veya "Yetkisiz Giriş" sayfasına yönlendir.
-  if (allowedRoles && !allowedRoles.includes(userRole)) {
-    // Güvenlik için token'ı silip login'e de atabiliriz,
-    // ama şimdilik sadece ana sayfaya yönlendiriyoruz.
+
+  // Büyük/Küçük Harf duyarsız kontrol (Admin vs admin, Customer vs customer)
+  const normalizedUserRole = userRole ? userRole.trim().toLowerCase() : "";
+  const normalizedAllowedRoles = allowedRoles
+    ? allowedRoles.map((r) => r.toLowerCase())
+    : [];
+
+  if (allowedRoles && !normalizedAllowedRoles.includes(normalizedUserRole)) {
+    // Şimdilik sadece ana sayfaya yönlendiriyoruz.
     return <Navigate to="/" replace />;
   }
 

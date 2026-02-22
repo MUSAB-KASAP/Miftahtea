@@ -53,6 +53,26 @@ const LoginPage = () => {
     setEmailSuggestions([]);
   };
 
+  // JWT Token Decode fonksiyonu
+  const decodeJwt = (token) => {
+    try {
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map(function (c) {
+            return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+          })
+          .join(""),
+      );
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      console.error("Token decode edilemedi:", e);
+      return null;
+    }
+  };
+
   const handleFormSubmit = async (event) => {
     event.preventDefault();
     setError("");
@@ -62,36 +82,70 @@ const LoginPage = () => {
     }
     try {
       const res = await loginUser(data);
-      if (res.data.success) {
-        localStorage.setItem("token", res.data.data.token);
-        localStorage.setItem("role", res.data.data.role);
+      console.log("LOGIN API YANITI:", res.data); // Hata Tespiti İçin Eklendi
 
-        const userRole = res.data.data.role;
-        if (userRole === "Admin") {
-          navigate("/admin/dashboard");
-        } else if (userRole === "Translator") {
-          navigate("/translator/dashboard");
-        } else {
-          navigate("/");
+      if (res.data.success) {
+        // Backend'in DTO yapısına göre data.data
+        const responseData = res.data.data || res.data;
+
+        // DİKKAT: Backend'den "accessToken" olarak dönüyor. Bu yüzden accessToken arıyoruz.
+        const incomingToken = responseData.accessToken || responseData.token;
+        let incomingRole = responseData.role;
+
+        // EĞER ROL JSON'DA YOKSA (undefined ise) AMA TOKEN VARSA TOKEN'I ÇÖZ
+        if (!incomingRole && incomingToken) {
+          const decoded = decodeJwt(incomingToken);
+          console.log("ÇÖZÜMLENMİŞ TOKEN İÇERİĞİ:", decoded);
+          if (decoded) {
+            // ASP.NET Core varsayılan Claim tipleri veya normal role prop'u
+            incomingRole =
+              decoded[
+                "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+              ] ||
+              decoded.role ||
+              decoded.Role;
+
+            // Eğer liste olarak gelirse string'e çevir
+            if (Array.isArray(incomingRole)) {
+              incomingRole = incomingRole[0];
+            }
+          }
         }
+
+        console.log("ÇIKARILAN ROL BİLGİSİ:", incomingRole);
+
+        // Değerler var ise localStorage'a yaz
+        if (incomingToken) localStorage.setItem("token", incomingToken);
+        if (incomingRole) localStorage.setItem("role", incomingRole);
+
+        // Yönlendirme
+        navigate("/");
+      } else {
+        setError(res.data.message || "Giriş başarısız oldu.");
       }
     } catch (err) {
       console.error("Giriş hatası:", err);
+      // Eğer server 500 dönüyorsa veya message yoksa
       setError(err.response?.data?.message || "Giriş başarısız oldu.");
     }
   };
 
   return (
-    <div className="login-page-wrapper">
-      <div className="auth-container">
-        <div className="heading">Giriş Yapın</div>
+    <div className="login-page-wrapper auth-bg-gradient">
+      <div className="auth-container glass-panel" style={{ border: "none" }}>
+        <h2
+          className="heading"
+          style={{ textAlign: "center", marginBottom: "20px" }}
+        >
+          Giriş Yapın
+        </h2>
 
         <form className="form" onSubmit={handleFormSubmit}>
           {/* E-mail Input */}
           <div style={{ position: "relative", width: "100%" }}>
             <input
               required
-              className="input"
+              className="modern-input"
               type="text"
               name="email"
               id="email"
@@ -151,7 +205,7 @@ const LoginPage = () => {
           <div className="password-wrapper">
             <input
               required
-              className="input"
+              className="modern-input"
               type={showPassword ? "text" : "password"}
               name="password"
               id="password"
@@ -173,7 +227,11 @@ const LoginPage = () => {
           </div>
 
           {/* Giriş Butonu */}
-          <button className="login-button" type="submit">
+          <button
+            className="btn-modern"
+            type="submit"
+            style={{ width: "100%", marginTop: "15px" }}
+          >
             Giriş Yapın
           </button>
 

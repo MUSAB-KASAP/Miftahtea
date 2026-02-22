@@ -9,7 +9,7 @@ namespace MiftahTEA.Application.DTOs
     public class AddPhotoRequest
     {
         public Guid UserId { get; set; }
-        public string PhotoUrl { get; set; }
+        public string? PhotoUrl { get; internal set; }
     }
 
 }

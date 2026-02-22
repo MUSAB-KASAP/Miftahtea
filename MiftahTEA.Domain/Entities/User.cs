@@ -34,13 +34,12 @@ namespace MiftahTEA.Domain.Entities
         public DateTime? RefreshTokenExpiry { get; set; }
         public bool IsApproved { get; set; }
         public string? Bio { get; set; }
-        public string? PhotoUrl { get; set; }
 
         public string? City { get; set; }
 
 
         public ICollection<TranslatorLanguagePair> TranslatorLanguagePairs { get; set; }
      = new List<TranslatorLanguagePair>();
-
+        public string? PhotoUrl { get; set; }
     }
 }

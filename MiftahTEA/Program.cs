@@ -7,6 +7,7 @@ using MiftahTEA.Infrastructure.Persistence;
 using MiftahTEA.WebAPI.Hubs;
 using Serilog;
 using System.Text;
+using System.Linq;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console() // console'a log basar
@@ -190,6 +191,9 @@ app.UseSerilogRequestLogging();
 
 // SignalR hub'ını route'a ekler
 app.MapHub<ChatHub>("/chatHub");
+
+// wwwroot klasöründeki statik dosyaları sunar (örneğin, resimler, css, js)
+app.UseStaticFiles();
 
 
 app.Run();

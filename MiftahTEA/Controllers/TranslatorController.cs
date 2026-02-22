@@ -4,9 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using MiftahTEA.Application.DTOs;
 using MiftahTEA.Application.Interfaces;
 using MiftahTEA.Domain.Entities;
+using MiftahTEA.DTOs;
+using System.IO;
+using System.Linq;
 using System.Security.Claims;
 
-namespace MiftahTEA.Controllers
+namespace MiftahTEA.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -146,22 +149,17 @@ namespace MiftahTEA.Controllers
         //  
         [Authorize(Roles = "Translator")]
         [HttpPut("profile")]
-        public async Task<IActionResult> UpdateProfile(UpdateTranslatorProfileRequest request)
+        public async Task<IActionResult> UpdateProfile([FromForm] UpdateTranslatorProfileWithPhotoRequest request)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
             if (userId == null)
                 return Unauthorized();
 
             var guid = Guid.Parse(userId);
 
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Id == guid);
-
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == guid);
             if (user == null)
                 return NotFound(ApiResponse<string>.Fail("Kullanıcı bulunamadı."));
-
-            //  VALIDATION BURAYA
 
             if (string.IsNullOrWhiteSpace(request.FullName))
                 return BadRequest(ApiResponse<string>.Fail("İsim boş olamaz."));
@@ -172,17 +170,38 @@ namespace MiftahTEA.Controllers
             if (request.Bio?.Length > 1000)
                 return BadRequest(ApiResponse<string>.Fail("Biyografi en fazla 1000 karakter olabilir."));
 
-            if (!string.IsNullOrEmpty(request.PhotoUrl))
-            {
-                if (!Uri.TryCreate(request.PhotoUrl, UriKind.Absolute, out _))
-                    return BadRequest(ApiResponse<string>.Fail("Geçersiz fotoğraf linki."));
-            }
-
-            //  GÜNCELLEME BURADA
-
             user.FullName = request.FullName.Trim();
             user.Bio = request.Bio?.Trim();
-            user.PhotoUrl = request.PhotoUrl?.Trim();
+
+            // FOTO YÜKLEME
+            if (request.Photo != null && request.Photo.Length > 0)
+            {
+                // 🔥 MAX 2 MB
+                if (request.Photo.Length > 2 * 1024 * 1024)
+                    return BadRequest(ApiResponse<string>.Fail("Fotoğraf maksimum 2MB olabilir."));
+
+                // 🔥 SADECE JPG / PNG
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                var extension = Path.GetExtension(request.Photo.FileName).ToLower();
+
+                if (!allowedExtensions.Contains(extension))
+                    return BadRequest(ApiResponse<string>.Fail("Sadece JPG ve PNG formatı desteklenir."));
+
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
+
+                var fileName = Guid.NewGuid().ToString() + extension;
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await request.Photo.CopyToAsync(stream);
+                }
+
+                user.PhotoUrl = "/uploads/" + fileName;
+            }
 
             await _context.SaveChangesAsync();
 
@@ -228,6 +247,49 @@ namespace MiftahTEA.Controllers
             await _context.SaveChangesAsync();
 
             return Ok();
+        }
+        // Tercuman profil bilgilerini döndüren endpoint
+        [Authorize(Roles = "Translator")]
+        [HttpGet("profile")]
+        public async Task<IActionResult> GetProfile()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            var guid = Guid.Parse(userId);
+
+            var user = await _context.Users
+                .Where(u => u.Id == guid)
+                .Select(u => new
+                {
+                    u.FullName,
+                    u.Bio,
+                    u.PhotoUrl,
+                    u.City,
+                    u.IsActive
+                })
+                .FirstOrDefaultAsync();
+
+            return Ok(user);
+        }
+        // Tercuman profil aktif/pasif durumunu değiştiren endpoint
+        [Authorize(Roles = "Translator")]
+        [HttpPut("profile/toggle")]
+        public async Task<IActionResult> ToggleProfile()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            var guid = Guid.Parse(userId);
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == guid);
+            if (user == null) return NotFound();
+
+            user.IsActive = !user.IsActive;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { user.IsActive });
         }
 
     }

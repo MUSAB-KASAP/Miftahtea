@@ -20,5 +20,7 @@ namespace MiftahTEA.Domain.Entities
         public decimal BasePrice { get; set; }
 
         public  string PriceDescription { get; set; }
+
+
     }
 }

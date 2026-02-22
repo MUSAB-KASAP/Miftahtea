@@ -11,6 +11,6 @@ namespace MiftahTEA.Application.DTOs
         public string FullName { get; set; }
         //public string? PhoneNumber { get; set; }
         public string? City { get; set; }
-        public string? PhotoUrl { get; set; }
+        public object Photo { get; set; }
     }
 }

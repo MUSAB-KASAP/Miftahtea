@@ -130,7 +130,7 @@ namespace MiftahTEA.API.Controllers
         }
         [Authorize(Roles = "Customer")]
         [HttpPut("profile")]
-        public async Task<IActionResult> UpdateProfile(UpdateCustomerProfileRequest request)
+        public async Task<IActionResult> UpdateProfile(UpdateCustomerProfileRequest request, string photo)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return Unauthorized();
@@ -145,8 +145,7 @@ namespace MiftahTEA.API.Controllers
             user.FullName = request.FullName;
             //user.PhoneNumber = request.PhoneNumber;
             user.City = request.City;
-            user.PhotoUrl = request.PhotoUrl;
-
+            user.PhotoUrl = photo;
             await _context.SaveChangesAsync();
 
             return Ok("Profil güncellendi.");
